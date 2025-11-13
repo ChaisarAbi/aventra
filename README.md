@@ -45,7 +45,3 @@ npm run dev -- --port 3501
 docker-compose up --build
 ```
 
-## 🔐 Admin Access
-- Username: aventra
-- Password: Leaveempty1!
-- Access: `/admin/login`
