@@ -1,0 +1,80 @@
+version: '3.9'
+
+services:
+  # Nginx Proxy Manager for SSL and reverse proxy
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'    # HTTP
+      - '443:443'  # HTTPS
+      - '81:81'    # Admin UI
+    volumes:
+      - ./data/nginx-proxy-manager:/data
+      - ./data/letsencrypt:/etc/letsencrypt
+    networks:
+      - aventra-network
+
+  # Backend API
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    env_file:
+      - ./backend/.env.production
+    volumes:
+      - ./backend/portfolio.db:/app/portfolio.db
+      - ./backup:/app/backup
+    networks:
+      - aventra-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Next.js Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3501:3501"
+    environment:
+      - NEXT_PUBLIC_API_URL=https://api.aventra.my.id
+      - NODE_ENV=production
+    networks:
+      - aventra-network
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3501"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Uptime Kuma for monitoring (optional)
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data/uptime-kuma:/app/data
+    networks:
+      - aventra-network
+
+networks:
+  aventra-network:
+    driver: bridge
+
+volumes:
+  nginx-data:
+  letsencrypt:
+  uptime-kuma-data:
