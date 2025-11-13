@@ -289,7 +289,7 @@ function NewProjectContent() {
                     <FormLabel>Project Image (Optional)</FormLabel>
                     <FormControl>
                       <ImageUpload
-                        value={field.value}
+                        value={field.value || ''}
                         onChange={field.onChange}
                         disabled={isSubmitting}
                       />

@@ -276,7 +276,7 @@ export default function EditProjectPage() {
                         <FormLabel>Project Image</FormLabel>
                         <FormControl>
                           <ImageUpload
-                            value={field.value}
+                            value={field.value || ''}
                             onChange={field.onChange}
                             disabled={isSubmitting}
                           />
