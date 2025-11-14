@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Project, ProjectCreate, ProjectUpdate, ContactMessage, AdminLogin, AuthToken } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.aventra.my.id';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -42,13 +42,9 @@ export const publicApi = {
 export const adminApi = {
   // Auth
   login: (data: AdminLogin) => {
-    const formData = new URLSearchParams();
-    formData.append('username', data.username);
-    formData.append('password', data.password);
-    
-    return api.post<AuthToken>('/api/admin/login', formData, {
+    return api.post<AuthToken>('/api/admin/login', data, {
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       }
     });
   },
