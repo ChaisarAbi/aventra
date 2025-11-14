@@ -1,14 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlmodel import Session, select
 from typing import List
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
 from models.project import Project, ProjectCreate, ProjectUpdate, ProjectPublic
-from models.auth import LoginRequest
 from utils.database import get_session
 from utils.auth import verify_token
 
@@ -16,32 +13,19 @@ load_dotenv()
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 # JWT Configuration
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "supersecretkey")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
+# Static admin credentials (simple and direct)
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "abi")
-ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "Leaveempty1!")
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 
 
 def authenticate_user(username: str, password: str):
-    if username != ADMIN_USERNAME:
-        return False
-    if not verify_password(password, get_password_hash(ADMIN_PASSWORD)):
-        return False
-    return True
+    """Simple authentication without bcrypt"""
+    return username == ADMIN_USERNAME and password == ADMIN_PASSWORD
 
 
 def create_access_token(data: dict, expires_delta: timedelta = None):
@@ -56,17 +40,26 @@ def create_access_token(data: dict, expires_delta: timedelta = None):
 
 
 @router.post("/login")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
+def login(credentials: dict):
+    """Simple login endpoint without OAuth2 complexity"""
+    username = credentials.get("username")
+    password = credentials.get("password")
+    
+    if not username or not password:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username and password are required"
+        )
+    
+    if not authenticate_user(username, password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Incorrect username or password"
         )
+    
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": form_data.username}, expires_delta=access_token_expires
+        data={"sub": username}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
 
