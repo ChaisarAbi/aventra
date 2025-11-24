@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # Nginx Proxy Manager for SSL and reverse proxy
   nginx-proxy-manager:
